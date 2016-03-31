@@ -35,7 +35,7 @@ uninstall :
 reinstall : clean uninstall install
 
 test: $(PKG_DIR)
-	$(CASK) exec ert-runner
+	$(CASK) exec ert-runner -l $(SRC)
 
 clean-all : clean
 	rm -rf $(PKG_DIR)
