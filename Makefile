@@ -1,54 +1,48 @@
-CASK        ?= cask
-EMACS       ?= emacs
-DIST        ?= dist
-EMACSFLAGS   = --batch -Q
-EMACSBATCH   = $(EMACS) $(EMACSFLAGS)
+# Programs
 
-VERSION     := $(shell EMACS=$(EMACS) $(CASK) version)
-PKG_DIR     := $(shell EMACS=$(EMACS) $(CASK) package-directory)
-PROJ_ROOT   := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
+CASK = cask
+EMACS = emacs
 
-EMACS_D      = ~/.emacs.d
-USER_ELPA_D  = $(EMACS_D)/elpa
+# Program availability
 
-SRCS         = $(filter-out %-pkg.el, $(wildcard *.el))
-TESTS        = $(wildcard test/*.el)
-TAR          = $(DIST)/flycheck-sbt-quickfix-$(VERSION).tar
+HAVE_CASK := $(shell sh -c "command -v $(CASK)")
+ifndef HAVE_CASK
+$(warning "$(CASK) is not available.")
+endif
 
+# Internal variables
 
-.PHONY: all test unit ecukes deps install uninstall reinstall clean-all clean
-all : deps $(TAR)
+EMACSFLAGS = --batch -Q
+EMACSBATCH = $(EMACS) $(EMACSFLAGS)
+VERSION = $(shell EMACS=$(EMACS) $(CASK) version)
 
-deps :
-	$(CASK) install
+# Files and dirs
 
-install : $(TAR)
-	$(EMACSBATCH) -l package -f package-initialize \
-	--eval '(package-install-file "$(PROJ_ROOT)/$(TAR)")'
+PKG_DIR = $(shell EMACS=$(EMACS) $(CASK) package-directory)
+EMACS_D = ~/.emacs.d
+USER_ELPA_D = $(EMACS_D)/elpa
+SRC = flycheck-sbt-quickfix.el
+
+.PHONY: all test install uninstall reinstall clean-all clean
+all : $(PKG_DIR)
+
+install :
+	$(EMACSBATCH) -l package -f package-initialize --eval '(package-install-file "$(SRC)")'
 
 uninstall :
 	rm -rf $(USER_ELPA_D)/flycheck-sbt-quickfix-*
 
 reinstall : clean uninstall install
 
+test: $(PKG_DIR)
+	$(CASK) exec ert-runner
+
 clean-all : clean
 	rm -rf $(PKG_DIR)
 
 clean :
 	rm -f *.elc
-	rm -rf $(DIST)
 	rm -f *-pkg.el
 
-$(TAR) : $(DIST) $(SRCS)
-	$(CASK) package $(DIST)
-
-$(DIST) :
-	mkdir $(DIST)
-
-test: unit ecukes
-
-unit: $(PKG_DIR)
-	${CASK} exec ert-runner
-
-ecukes: $(PKG_DIR)
-	${CASK} exec ecukes
+$(PKG_DIR) :
+	$(CASK) install
