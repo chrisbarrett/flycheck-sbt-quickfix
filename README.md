@@ -1,5 +1,7 @@
 # flycheck-sbt-quickfix
 
+DANGER: WIP, doesn't really work yet.
+
 ## Summary
 
 Flycheck checker for sbt-quickfix plugin.
